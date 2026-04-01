@@ -111,55 +111,24 @@ int main() {
             0.75f, -0.25f, 0.0f, 0.5f, 0.25f, 0.0f, 0.25f, -0.25f, 0.0f,
         };
 
-        unsigned int VAO1, VAO2;
-        VAO1 = GenerateTriangle(vertices1);
-
-        VAO2 = GenerateTriangle(vertices2);
-
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        while (!glfwWindowShouldClose(window)) {
-                processInput(window);
-
-                // rendering commands here
-                // this sets the color that will be used by
-                // `glClear`
-                glClearColor(0.2f, 0.3f, 0.3f, 0.1f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                glUseProgram(shaderProgram);
-                glBindVertexArray(VAO1);
-
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-
-                glBindVertexArray(VAO2);
-
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-
-                glfwPollEvents();
-                glfwSwapBuffers(window);
-        }
-
-        return 0;
-}
-
-// TODO: maybe should ask for a std::array and not for a array reference
-unsigned int GenerateTriangle(float (&vertices)[9]) {
-        std::cout << "DEBUG: GENERATING TRIANGLE\n";
-
-        for (int i = 0; i < 9; ++i) {
-                std::cout << vertices[i] << "\n";
-        }
-
-        unsigned int VBO, VAO;
+        unsigned int VAOs[2], VBOs[2];
 
         // i don't understand the VAO at all
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
+        glGenVertexArrays(2, VAOs);
+        glGenBuffers(2, VBOs);
 
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+        glBindVertexArray(VAOs[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1,
+                     GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                              (void *)0);
+        glEnableVertexAttribArray(0);
+
+        glBindVertexArray(VAOs[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2,
                      GL_STATIC_DRAW);
 
         // I FINALLY UNDERSTAND, THIS CONVERTS THE DATA OF THE
@@ -177,7 +146,31 @@ unsigned int GenerateTriangle(float (&vertices)[9]) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        return VAO;
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        while (!glfwWindowShouldClose(window)) {
+                processInput(window);
+
+                // rendering commands here
+                // this sets the color that will be used by
+                // `glClear`
+                glClearColor(0.2f, 0.3f, 0.3f, 0.1f);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                glUseProgram(shaderProgram);
+                glBindVertexArray(VAOs[0]);
+
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+
+                glBindVertexArray(VAOs[1]);
+
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+
+                glfwPollEvents();
+                glfwSwapBuffers(window);
+        }
+
+        return 0;
 }
 
 void processInput(GLFWwindow *window) {
