@@ -27,6 +27,14 @@ const char *fragmentShaderSource = "#version 330 core\n"
                                    "}\n"
                                    "\0 ";
 
+const char *fragmentYellowShaderSource =
+    "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main() {\n "
+    "FragColor = vec4(255.0f, 255.0f, 0.0f, 1.0f);\n"
+    "}\n"
+    "\0 ";
+
 unsigned int GenerateTriangle(float (&vertices)[9]);
 
 int main() {
@@ -81,7 +89,21 @@ int main() {
                 std::cout << "ERROR COMPILATING SHADER: " << infoLog << '\n';
         }
 
-        unsigned int shaderProgram;
+        unsigned int fragmentYellowShader = glCreateShader(GL_FRAGMENT_SHADER);
+        // Why there is a one? Don't ask to me
+        glShaderSource(fragmentYellowShader, 1, &fragmentYellowShaderSource,
+                       NULL);
+        glCompileShader(fragmentYellowShader);
+
+        glGetShaderiv(fragmentYellowShader, GL_COMPILE_STATUS, &success);
+
+        if (!success) {
+                glGetShaderInfoLog(fragmentYellowShader, 256, NULL, infoLog);
+
+                std::cout << "ERROR COMPILATING SHADER: " << infoLog << '\n';
+        }
+
+        unsigned int shaderProgram, yellowShaderProgram;
 
         shaderProgram = glCreateProgram();
 
@@ -98,7 +120,23 @@ int main() {
                 std::cout << "ERROR COMPILATING PROGRAM: " << infoLog << '\n';
         }
 
+        yellowShaderProgram = glCreateProgram();
+
+        glAttachShader(yellowShaderProgram, vertexShader);
+        glAttachShader(yellowShaderProgram, fragmentYellowShader);
+        // TODO: check for errors here
+        glLinkProgram(yellowShaderProgram);
+
+        glGetProgramiv(yellowShaderProgram, GL_LINK_STATUS, &success);
+
+        if (!success) {
+                glGetProgramInfoLog(yellowShaderProgram, 256, NULL, infoLog);
+
+                std::cout << "ERROR COMPILATING PROGRAM: " << infoLog << '\n';
+        }
+
         glDeleteShader(vertexShader);
+        glDeleteShader(yellowShaderProgram);
         glDeleteShader(fragmentShader);
 
         float vertices1[] = {
@@ -162,6 +200,7 @@ int main() {
 
                 glDrawArrays(GL_TRIANGLES, 0, 3);
 
+                glUseProgram(yellowShaderProgram);
                 glBindVertexArray(VAOs[1]);
 
                 glDrawArrays(GL_TRIANGLES, 0, 3);
