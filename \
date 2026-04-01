@@ -108,7 +108,7 @@ int main() {
 
         float vertices2[] = {
             // Denote that always you have to respect the order of the vertices
-            0.75f, -0.25f, 0.0f, 0.5f, 0.25f, 0.0f, 0.25f, -0.25f, 0.0f,
+            0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f,
         };
 
         unsigned int VAO1, VAO2;
@@ -116,7 +116,7 @@ int main() {
 
         VAO2 = GenerateTriangle(vertices2);
 
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         while (!glfwWindowShouldClose(window)) {
                 processInput(window);
