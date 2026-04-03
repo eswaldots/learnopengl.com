@@ -1,5 +1,7 @@
 // clang-format off
+#include "shader.hpp"
 #include <cmath>
+// #include <GLES3/gl3.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -13,24 +15,6 @@ void processInput(GLFWwindow *window);
 
 // we only need this vertex because we need to pass the position from the vertex
 // to the another graphic pipeline step
-const char *vertexShaderSource =
-    "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec3 aColor;\n"
-    "out vec3 ourColor;\n"
-    "void main() {\n "
-    "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "ourColor = aColor;"
-    "}\n"
-    "\0 ";
-
-const char *fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "in vec3 ourColor;\n"
-                                   "void main() {\n "
-                                   "FragColor = vec4(ourColor, 1.0);\n"
-                                   "}\n"
-                                   "\0 ";
 
 int main() {
         std::cout << "DEBUG: Initializing C++ program" << "\n";
@@ -52,57 +36,6 @@ int main() {
 
                 return -1;
         }
-
-        unsigned int vertexShader;
-
-        vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        // Why there is a one? Don't ask to me
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        glCompileShader(vertexShader);
-
-        int success;
-        char infoLog[256];
-
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-        if (!success) {
-                glGetShaderInfoLog(vertexShader, 256, NULL, infoLog);
-
-                std::cout << "ERROR COMPILATING SHADER: " << infoLog << '\n';
-        }
-
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        // Why there is a one? Don't ask to me
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        glCompileShader(fragmentShader);
-
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-        if (!success) {
-                glGetShaderInfoLog(fragmentShader, 256, NULL, infoLog);
-
-                std::cout << "ERROR COMPILATING SHADER: " << infoLog << '\n';
-        }
-
-        unsigned int shaderProgram;
-
-        shaderProgram = glCreateProgram();
-
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        // TODO: check for errors here
-        glLinkProgram(shaderProgram);
-
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-
-        if (!success) {
-                glGetProgramInfoLog(shaderProgram, 256, NULL, infoLog);
-
-                std::cout << "ERROR COMPILATING PROGRAM: " << infoLog << '\n';
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
 
         // clang-format off
         float vertices[] = {
@@ -140,6 +73,9 @@ int main() {
 
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+        Shader ourShader("../shaders/triangle.vert",
+                         "../shaders/triangle.frag");
+
         while (!glfwWindowShouldClose(window)) {
                 processInput(window);
 
@@ -149,7 +85,7 @@ int main() {
                 glClearColor(0.2f, 0.3f, 0.3f, 0.1f);
                 glClear(GL_COLOR_BUFFER_BIT);
 
-                glUseProgram(shaderProgram);
+                ourShader.use();
 
                 glBindVertexArray(VAO);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
