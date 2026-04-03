@@ -1,4 +1,5 @@
 // clang-format off
+#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -15,27 +16,21 @@ void processInput(GLFWwindow *window);
 const char *vertexShaderSource =
     "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 aColor;\n"
+    "out vec3 ourColor;\n"
     "void main() {\n "
     "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "ourColor = aColor;"
     "}\n"
     "\0 ";
 
 const char *fragmentShaderSource = "#version 330 core\n"
                                    "out vec4 FragColor;\n"
+                                   "in vec3 ourColor;\n"
                                    "void main() {\n "
-                                   "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                   "FragColor = vec4(ourColor, 1.0);\n"
                                    "}\n"
                                    "\0 ";
-
-const char *fragmentYellowShaderSource =
-    "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main() {\n "
-    "FragColor = vec4(255.0f, 255.0f, 0.0f, 1.0f);\n"
-    "}\n"
-    "\0 ";
-
-unsigned int GenerateTriangle(float (&vertices)[9]);
 
 int main() {
         std::cout << "DEBUG: Initializing C++ program" << "\n";
@@ -89,21 +84,7 @@ int main() {
                 std::cout << "ERROR COMPILATING SHADER: " << infoLog << '\n';
         }
 
-        unsigned int fragmentYellowShader = glCreateShader(GL_FRAGMENT_SHADER);
-        // Why there is a one? Don't ask to me
-        glShaderSource(fragmentYellowShader, 1, &fragmentYellowShaderSource,
-                       NULL);
-        glCompileShader(fragmentYellowShader);
-
-        glGetShaderiv(fragmentYellowShader, GL_COMPILE_STATUS, &success);
-
-        if (!success) {
-                glGetShaderInfoLog(fragmentYellowShader, 256, NULL, infoLog);
-
-                std::cout << "ERROR COMPILATING SHADER: " << infoLog << '\n';
-        }
-
-        unsigned int shaderProgram, yellowShaderProgram;
+        unsigned int shaderProgram;
 
         shaderProgram = glCreateProgram();
 
@@ -120,65 +101,38 @@ int main() {
                 std::cout << "ERROR COMPILATING PROGRAM: " << infoLog << '\n';
         }
 
-        yellowShaderProgram = glCreateProgram();
-
-        glAttachShader(yellowShaderProgram, vertexShader);
-        glAttachShader(yellowShaderProgram, fragmentYellowShader);
-        // TODO: check for errors here
-        glLinkProgram(yellowShaderProgram);
-
-        glGetProgramiv(yellowShaderProgram, GL_LINK_STATUS, &success);
-
-        if (!success) {
-                glGetProgramInfoLog(yellowShaderProgram, 256, NULL, infoLog);
-
-                std::cout << "ERROR COMPILATING PROGRAM: " << infoLog << '\n';
-        }
-
         glDeleteShader(vertexShader);
-        glDeleteShader(yellowShaderProgram);
         glDeleteShader(fragmentShader);
 
-        float vertices1[] = {
+        // clang-format off
+        float vertices[] = {
             // Denote that always you have to respect the order of the vertices
-            0.25f, -0.25f, 0.0f, 0.0f, 0.25f, 0.0f, -0.25f, -0.25f, 0.0f,
+            0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+	    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+	    0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
         };
+        // clang-format on
 
-        float vertices2[] = {
-            // Denote that always you have to respect the order of the vertices
-            0.75f, -0.25f, 0.0f, 0.5f, 0.25f, 0.0f, 0.25f, -0.25f, 0.0f,
-        };
-
-        unsigned int VAOs[2], VBOs[2];
+        unsigned int VAO, VBO;
 
         // i don't understand the VAO at all
-        glGenVertexArrays(2, VAOs);
-        glGenBuffers(2, VBOs);
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
 
-        glBindVertexArray(VAOs[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1,
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
                      GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                               (void *)0);
+
         glEnableVertexAttribArray(0);
 
-        glBindVertexArray(VAOs[1]);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2,
-                     GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                              (void *)(3 * sizeof(float)));
 
-        // I FINALLY UNDERSTAND, THIS CONVERTS THE DATA OF THE
-        // VERTICES INTO THE VEC3 FOR GSLS. VAO only caches this
-        // function full explanation ahead. The vao only stores the
-        // attributes and how OpenGL should interpret the data of
-        // the VBO, so you can generate as much VBO you want,
-        // without caring of commanding how opengl with interpret
-        // the data as much you indicate in the first VAO.
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                              (void *)0);
-        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
 
         // i think this is for free memory
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -196,13 +150,8 @@ int main() {
                 glClear(GL_COLOR_BUFFER_BIT);
 
                 glUseProgram(shaderProgram);
-                glBindVertexArray(VAOs[0]);
 
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-
-                glUseProgram(yellowShaderProgram);
-                glBindVertexArray(VAOs[1]);
-
+                glBindVertexArray(VAO);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
 
                 glfwPollEvents();
