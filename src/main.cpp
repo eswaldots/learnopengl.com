@@ -85,7 +85,10 @@ int main() {
                 glClearColor(0.2f, 0.3f, 0.3f, 0.1f);
                 glClear(GL_COLOR_BUFFER_BIT);
 
+                float time = glfwGetTime();
+
                 ourShader.use();
+                ourShader.setFloat("xOffset", 1.0f);
 
                 glBindVertexArray(VAO);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
