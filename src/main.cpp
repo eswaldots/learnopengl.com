@@ -88,7 +88,7 @@ int main() {
                 float time = glfwGetTime();
 
                 ourShader.use();
-                ourShader.setFloat("xOffset", 1.0f);
+                // ourShader.setFloat("xOffset", 0.0f);
 
                 glBindVertexArray(VAO);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
